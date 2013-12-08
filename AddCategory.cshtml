@@ -1,0 +1,76 @@
+﻿@using Piranha.Entities
+@using ReefWiki.Web
+@using ReefWiki.Web.Business.ReefData
+@model ReefWiki.Web.Models.CategoryPageViewModel
+@{
+    ViewBag.Title = Model.CurrentCategory.Name;
+    if (IsPost)
+    {
+        using (var client = new ReefDataFactory())
+        {
+            var categoryLanguages = new List<CategoryLanguage>();
+            var masterName = string.Empty;
+            var masterDescription = string.Empty;
+            foreach (LanguageBranch languageBranch in ViewBag.AvailableLanguages)
+            {
+                var nameInput = Request["name" + languageBranch.Id];
+                var descriptionInput = Request["description" + languageBranch.Id];
+                if (!string.IsNullOrWhiteSpace(nameInput))
+                {
+                    nameInput = nameInput.Trim();
+                    if (!string.IsNullOrWhiteSpace(descriptionInput))
+                    {
+                        descriptionInput = descriptionInput.Trim().Replace(Environment.NewLine, "<br/>");
+                    }
+                    if (languageBranch.IsMasterLanguage)
+                    {
+                        masterName = nameInput;
+                        masterDescription = descriptionInput;
+                    }
+                    categoryLanguages.Add(new CategoryLanguage { Name = nameInput.Trim(), Description = descriptionInput, LanguageBranch = languageBranch });
+                }
+            }
+            var isChildCategory = Request["ischildanimal"] == null;
+            Response.Write(Request.Files.Count);
+            //client.AddCategory(Model.CurrentCategory.Id, Model.CurrentCategory.HierarchyLevel + 1, masterName, masterDescription,"Systemadministrator,Administrator", isChildCategory, categoryLanguages);
+        }
+    }
+}
+<div class="large-3 medium-4 columns">
+    @Html.Partial("CategorySidebar", @Model.Categories)
+</div>
+<div class="large-9 medium-8 columns">
+
+    <form method="POST" data-ajax="false">
+        <h1>Add subcategory to @Model.CurrentCategory.Name</h1>
+        <div>
+            <label for="ischildanimal">Is the child of this category the animal?</label>
+            <input name="ischildanimal" type="checkbox" checked="checked"/>
+        </div>
+        <div>
+            <label for="fileupload">Bild</label>
+            <input type="file" name="fileupload" id="fileupload"/>
+            <input type="file" id="lol" name="lol"/>
+        </div>
+        <dl class="tabs" data-tab="">
+            @foreach (LanguageBranch languageBranch in ViewBag.AvailableLanguages)
+            {
+                <dd class="@(languageBranch.IsMasterLanguage ? "active": string.Empty)"><a href="@("#panel" + languageBranch.Id)">@languageBranch.Name</a></dd>
+            }
+        </dl>
+        <div class="tabs-content">
+            @foreach (LanguageBranch languageBranch in ViewBag.AvailableLanguages)
+            {
+                <div class="content@(languageBranch.IsMasterLanguage ? " active" : string.Empty)" id="@("panel" + languageBranch.Id)">
+                    <label for="@("name" + languageBranch.Id)">Name</label>
+                    <input type="text" name="@("name" + languageBranch.Id)" />
+                    <label for="@("desciption" + languageBranch.Id)">Description</label>
+                    <textarea rows="10" name="@("description" + languageBranch.Id)" class="editor"></textarea>
+                </div>
+            }
+        </div>
+        <div>
+            <button type="submit">Save</button>
+        </div>
+    </form>
+</div>
